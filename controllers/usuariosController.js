@@ -57,8 +57,64 @@ exports.crearUsuario = async (req, res, next) => {
 }
 
 //formulario para iniciar sesion
-exports.formIniciarSesion = (req, res) =>{
+exports.formIniciarSesion = (req, res) => {
     res.render('iniciar-sesion', {
         nombrePagina: 'Iniciar Sesión DevJobs'
     })
+}
+
+//editar el perfil
+exports.formEditarPerfil = (req, res) => {
+    res.render('editar-perfil', {
+        nombrePagina: 'Edita tu perfil en DevJobs',
+        usuario: req.user,
+        cerrarSesion: true,
+        nombre: req.user.nombre
+    })
+}
+
+//guardar cambios editar perfil
+exports.editarPerfil = async (req, res) => {
+    const usuario = await Usuarios.findById(req.user._id);
+
+    usuario.nombre = req.body.nombre;
+    usuario.email = req.body.email;
+    if (req.body.password) {
+        usuario.password = req.body.password
+    }
+
+    await usuario.save();
+
+    req.flash('correcto', 'Cambios Guardados Correctamente');
+    //redireccionar
+    res.redirect('/administracion');
+}
+
+//sanitizar y validar los campos de editar perfiles
+exports.validarPerfil = async (req, res, next) => {
+    //sanitizar y validar los campos
+    const rules = [
+        body('nombre').not().isEmpty().withMessage('El nombre no puede ir vacio').trim().escape(),
+        body('email').isEmail().withMessage('Agrega un correo valido').normalizeEmail().escape()
+    ];
+    if (req.body.password) {
+        rules.push(body('password').escape());
+    }
+    await Promise.all(rules.map(validation => validation.run(req)));
+    const errores = validationResult(req);
+    //si hay errores
+    if (!errores.isEmpty()) {
+        //Recargar la vista con los errores
+        req.flash('error', errores.array().map(error => error.msg));
+        res.render('editar-perfil', {
+            nombrePagina: 'Edita tu perfil en DevJobs',
+            usuario: req.user,
+            cerrarSesion: true,
+            nombre: req.user.nombre,
+            mensajes: req.flash()
+        })
+    }
+
+    // si no hay errores siguiente middleware
+    next();
 }

@@ -24,6 +24,13 @@
             </div>
         {{/if}}
 
+        {{#if cerrarSesion}}
+            <div class="cerrar-sesion">
+                <p>Hola! {{nombre}}</p>
+                <a href="/administracion">Administración</a>
+                <a href="/cerrar-sesion">Cerrar Sesión</a>
+            </div>
+        {{/if}}
     </div>
 
     <div class="site-header contenedor separador">

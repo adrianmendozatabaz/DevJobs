@@ -1,17 +1,27 @@
 //importar el modelo
 const mongoose = require('mongoose');
 const Vacante = mongoose.model('Vacante');
+const {
+    body,
+    validationResult
+} = require('express-validator');
+
 
 exports.formularioNuevaVacante = (req, res) =>{
     res.render('nueva-vacante', {
         nombrePagina: 'Nueva Vacante',
-        tagline: 'Llena el formulario y publica tu vacante'
+        tagline: 'Llena el formulario y publica tu vacante',
+        cerrarSesion: true,
+        nombre: req.user.nombre
     })
 }
 
 //agrega las vacantes a la base de datos
 exports.agregarVacante = async (req, res) => {
     const vacante = new Vacante(req.body);
+
+    //usuario autor de la vacante
+    vacante.autor = req.user._id;
     
     //crear arreglo de skills
     vacante.skills = req.body.skills.split(',');
@@ -48,7 +58,9 @@ exports.formEditarVacante = async (req, res, next) => {
     //si existe la vacante
     res.render('editar-vacante',{
         vacante,
-        nombrePagina: `Editar - ${vacante.titulo}`
+        nombrePagina: `Editar - ${vacante.titulo}`,
+        cerrarSesion: true,
+        nombre: req.user.nombre
     })
 }
 
@@ -63,5 +75,35 @@ exports.editarVacante = async (req, res) => {
     });
 
     res.redirect(`/vacantes/${vacante.url}`);
-    
+}
+
+// Validar y Sanitizar los campos de las nuevas vacantes
+exports.validarVacante = async (req, res, next) =>{
+    //sanitizar y validar los campos
+    const rules = [
+        body('titulo').not().isEmpty().withMessage('Agrega un titulo a la vacante').trim().escape(),
+        body('empresa').not().isEmpty().withMessage('Agrega una empresa').trim().escape(),
+        body('ubicacion').not().isEmpty().withMessage('Agrega una ubicación').trim().escape(),
+        body('contrato').not().isEmpty().withMessage('Agrega un tipo de contrato').escape(),
+        body('skills').not().isEmpty().withMessage('Agrega al menos una habilidad').escape(),
+        body('salario').escape()
+    ];
+
+    await Promise.all(rules.map(validation => validation.run(req)));
+    const errores = validationResult(req);
+    //si hay errores
+    if(!errores.isEmpty()){
+        //Recargar la vista con los errores
+        req.flash('error', errores.array().map(error => error.msg));
+        res.render('nueva-vacante', {
+            nombrePagina: 'Nueva Vacante',
+            tagline: 'Llena el formulario y publica tu vacante',
+            cerrarSesion: true,
+            nombre: req.user.nombre,
+            mensajes: req.flash()
+        })
+    }
+
+    // si no hay errores siguiente middleware
+    next();
 }
