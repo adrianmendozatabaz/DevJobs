@@ -77,5 +77,17 @@ module.exports = () =>{
         usuariosController.editarPerfil
     );
 
+    //Recibir mensajes de los candidatos
+    router.post('/vacantes/:url', 
+        vacantesController.subirCV,
+        vacantesController.contactar
+    );
+
+    //muestra los candidatos por vacante
+    router.get('/candidatos/:id',
+        authController.verificarUsuario,
+        vacantesController.mostrarCandidatos
+    );
+
     return router;
 }
