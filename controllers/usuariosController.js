@@ -8,35 +8,49 @@ const {
 const multer = require('multer');
 const shortid = require('shortid');
 
-exports.subirImagen = (req, res, next) =>{
-    upload(req, res, function(error){
-        if(error instanceof multer.MulterError){
+exports.subirImagen = (req, res, next) => {
+    upload(req, res, function (error) {
+        if (error) {
+            if (error instanceof multer.MulterError) {
+                if (error.code === 'LIMIT_FILE_SIZE') {
+                    req.flash('error', 'El archivo es muy grande max 100kb');
+                } else {
+                    req.flash('error', error.message)
+                }
+            } else {
+                req.flash('error', error.message);
+            }
+            res.redirect('/administracion');
+            return;
+        } else {
             return next();
         }
     })
-    next();
 }
 
 //opciones de multer
 const configuracionMulter = {
+
+    limits: {
+        fileSize: 100000
+    },
     storage: fileStorage = multer.diskStorage({
         destination: (req, file, cb) => {
-            cb(null, __dirname+'../../public/uploads/perfiles')
+            cb(null, __dirname + '../../public/uploads/perfiles')
         },
-        filename: (req, file, cb) =>{
+        filename: (req, file, cb) => {
             const extension = file.mimetype.split('/')[1];
-            cb(null, `${shortid.generate()}.${extension}`);            
+            cb(null, `${shortid.generate()}.${extension}`);
         }
     }),
-    fileFilter(req, file, cb){
-        if(file.mimetype === 'image/jpeg' || file.mimetype === 'image/png'){
+    fileFilter(req, file, cb) {
+        if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
             //callback true : aceptado
             cb(null, true);
-        }else{
-            cb(null, false);
+        } else {
+            cb(new Error('Formato no válido'), false);
         }
-    },
-    limits: {fileSize : 100000}
+    }
 }
 
 const upload = multer(configuracionMulter).single('imagen');
@@ -103,7 +117,8 @@ exports.formEditarPerfil = (req, res) => {
         nombrePagina: 'Edita tu perfil en DevJobs',
         usuario: req.user,
         cerrarSesion: true,
-        nombre: req.user.nombre
+        nombre: req.user.nombre,
+        imagen: req.user.imagen
     })
 }
 
@@ -116,7 +131,7 @@ exports.editarPerfil = async (req, res) => {
     if (req.body.password) {
         usuario.password = req.body.password
     }
-    if(req.file){
+    if (req.file) {
         usuario.imagen = req.file.filename;
     }
 
@@ -148,6 +163,7 @@ exports.validarPerfil = async (req, res, next) => {
             usuario: req.user,
             cerrarSesion: true,
             nombre: req.user.nombre,
+            imagen: req.user.imagen,
             mensajes: req.flash()
         })
     }

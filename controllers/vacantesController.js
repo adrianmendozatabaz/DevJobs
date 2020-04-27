@@ -12,7 +12,8 @@ exports.formularioNuevaVacante = (req, res) =>{
         nombrePagina: 'Nueva Vacante',
         tagline: 'Llena el formulario y publica tu vacante',
         cerrarSesion: true,
-        nombre: req.user.nombre
+        nombre: req.user.nombre,
+        imagen: req.user.imagen
     })
 }
 
@@ -35,7 +36,7 @@ exports.agregarVacante = async (req, res) => {
 
 //muestra una vacante
 exports.mostrarVacante = async (req, res, next) =>{
-    const vacante = await Vacante.findOne({url: req.params.url});
+    const vacante = await Vacante.findOne({url: req.params.url}).populate('autor');
 
     //si no hay resultados
     if(!vacante) return next();
@@ -60,7 +61,8 @@ exports.formEditarVacante = async (req, res, next) => {
         vacante,
         nombrePagina: `Editar - ${vacante.titulo}`,
         cerrarSesion: true,
-        nombre: req.user.nombre
+        nombre: req.user.nombre,
+        imagen: req.user.imagen
     })
 }
 

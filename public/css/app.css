@@ -402,9 +402,10 @@ p.candidatos {
     color: #616065;
 }
 .admin-perfil {
-    width: 120px;
+    width: 60px!important;
     align-self: flex-start;
     margin-right: 1rem;
+    border-radius: 5px;
 }
 .cerrar-sesion p, 
 .cerrar-sesion a {
