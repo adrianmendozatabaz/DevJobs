@@ -82,4 +82,9 @@ app.use((error, req, res, next) => {
 })
 
 //puerto donde se muestra la app
-app.listen(process.env.PUERTO);
+//dejar que heroku asigne el puerto
+const host = '0.0.0.0';
+const port = process.env.PORT;
+app.listen(port, host, () =>{
+    console.log('El servidor esta funcionando');
+});
